@@ -62,6 +62,14 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
+        <repository>
+            <id>lgbinspire-release</id>
+            <url>http://repo.lat-lon/nexus/content/repositories/lgbinspire-release/</url>
+        </repository>
+        <repository>
+            <id>lgbinspire-snapshot</id>
+            <url>http://repo.lat-lon/nexus/content/repositories/lgbinspire-snapshot/</url>
+        </repository>
     </repositories>
 
     <dependencies>

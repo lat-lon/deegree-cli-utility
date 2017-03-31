@@ -147,12 +147,12 @@
 
     <distributionManagement>
         <repository>
-            <id>latlon-deegreeaddons-releases</id>
-            <url>http://repo.lat-lon/nexus/content/repositories/deegreeaddons-releases/</url>
+            <id>lgbinspire-release</id>
+            <url>http://repo.lat-lon/nexus/content/repositories/lgbinspire-release/</url>
         </repository>
         <snapshotRepository>
-            <id>latlon-deegreeaddons-snapshots</id>
-            <url>http://repo.lat-lon/nexus/content/repositories/deegreeaddons-snapshots/</url>
+            <id>lgbinspire-snapshot</id>
+            <url>http://repo.lat-lon/nexus/content/repositories/lgbinspire-snapshot/</url>
         </snapshotRepository>
     </distributionManagement>
 

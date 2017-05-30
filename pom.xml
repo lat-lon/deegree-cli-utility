@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.deegree</groupId>
     <artifactId>deegree-cli-utility</artifactId>
-    <version>2.0-SNAPSHOT</version>
+    <version>1.1-bayldbvdeegree-1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <inceptionYear>2016</inceptionYear>
@@ -61,6 +61,14 @@
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
+        </repository>
+        <repository>
+            <id>bayldbvdeegree-releases</id>
+            <url>http://repo.lat-lon/nexus/content/repositories/bayldbvdeegree-releases/</url>
+        </repository>
+        <repository>
+            <id>bayldbvdeegree-snapshots</id>
+            <url>http://repo.lat-lon/nexus/content/repositories/bayldbvdeegree-snapshots/</url>
         </repository>
     </repositories>
 
@@ -158,12 +166,12 @@
 
     <distributionManagement>
         <repository>
-            <id>latlon-deegreeaddons-releases</id>
-            <url>http://repo.lat-lon/nexus/content/repositories/deegreeaddons-releases/</url>
+            <id>bayldbvdeegree-releases</id>
+            <url>http://repo.lat-lon/nexus/content/repositories/bayldbvdeegree-releases/</url>
         </repository>
         <snapshotRepository>
-            <id>latlon-deegreeaddons-snapshots</id>
-            <url>http://repo.lat-lon/nexus/content/repositories/deegreeaddons-snapshots/</url>
+            <id>bayldbvdeegree-snapshots</id>
+            <url>http://repo.lat-lon/nexus/content/repositories/bayldbvdeegree-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
 

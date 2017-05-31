@@ -64,11 +64,11 @@
         </repository>
         <repository>
             <id>bayldbvdeegree-releases</id>
-            <url>http://repo.lat-lon/nexus/content/repositories/bayldbvdeegree-releases/</url>
+            <url>http://repo/nexus/content/repositories/bayldbvdeegree-releases/</url>
         </repository>
         <repository>
             <id>bayldbvdeegree-snapshots</id>
-            <url>http://repo.lat-lon/nexus/content/repositories/bayldbvdeegree-snapshots/</url>
+            <url>http://repo/nexus/content/repositories/bayldbvdeegree-snapshots/</url>
         </repository>
     </repositories>
 
@@ -167,11 +167,11 @@
     <distributionManagement>
         <repository>
             <id>bayldbvdeegree-releases</id>
-            <url>http://repo.lat-lon/nexus/content/repositories/bayldbvdeegree-releases/</url>
+            <url>http://repo/nexus/content/repositories/bayldbvdeegree-releases/</url>
         </repository>
         <snapshotRepository>
             <id>bayldbvdeegree-snapshots</id>
-            <url>http://repo.lat-lon/nexus/content/repositories/bayldbvdeegree-snapshots/</url>
+            <url>http://repo/nexus/content/repositories/bayldbvdeegree-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
 

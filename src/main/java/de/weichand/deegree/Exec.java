@@ -21,6 +21,8 @@
  */
 package de.weichand.deegree;
 
+import static org.deegree.feature.types.property.GeometryPropertyType.CoordinateDimension.DIM_2;
+
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -29,11 +31,17 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.xml.namespace.QName;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
+
 import org.deegree.commons.xml.stax.IndentingXMLStreamWriter;
 import org.deegree.cs.persistence.CRSManager;
 import org.deegree.cs.refs.coordinatesystem.CRSRef;
@@ -43,7 +51,6 @@ import org.deegree.feature.persistence.sql.config.SQLFeatureStoreConfigWriter;
 import org.deegree.feature.persistence.sql.ddl.DDLCreator;
 import org.deegree.feature.persistence.sql.mapper.AppSchemaMapper;
 import org.deegree.feature.types.AppSchema;
-import static org.deegree.feature.types.property.GeometryPropertyType.CoordinateDimension.DIM_2;
 import org.deegree.gml.schema.GMLAppSchemaReader;
 import org.deegree.sqldialect.SQLDialect;
 import org.deegree.sqldialect.oracle.OracleDialect;
@@ -56,6 +63,8 @@ import org.deegree.sqldialect.postgis.PostGISDialect;
  */
 public class Exec {
 
+    private static final PropertyNameParser propertyNameParser = new PropertyNameParser();
+
     // default values
     private static String format = "deegree"; // generates deegree SQLFeatureStore config file only
 
@@ -65,11 +74,16 @@ public class Exec {
 
     private static boolean relationalMapping = true; // generates relational mapping derived from GML application schema
 
+    private static String dialect = "postgis"; // generates mapping for PostGIS dialect
+
     private static SQLDialect sqlDialect = instantiateDialect( null ); // generates mapping for PostGIS dialect (per
                                                                        // default)
 
+    private static List<QName> propertiesWithPrimitiveHref; // primitive href mapping instead of feature mapping is used
+                                                            // in deegree configuration for listed properties
+
     public static void main( String[] args )
-                            throws Exception {
+                    throws Exception {
 
         if ( args.length == 0 ) {
             System.out.println( "Usage: java -jar deegree-cli-utility.jar [options] schema_url" );
@@ -80,6 +94,19 @@ public class Exec {
             System.out.println( " --idtype={int|uuid}" );
             System.out.println( " --mapping={relational|blob}" );
             System.out.println( " --dialect={postgis|oracle}" );
+            System.out.println( " --listOfPropertiesWithPrimitiveHref=<path/to/file>" );
+            System.out.println( "" );
+            System.out.println( "The option listOfPropertiesWithPrimitiveHref references a file listing properties which are written with primitive instead of feature mappings (see deegree-webservices documentation and README of this tool for further information):" );
+            System.out.println( "---------- begin file ----------" );
+            System.out.println( "# lines beginning with an # are ignored" );
+            System.out.println( "# property with namespace binding" );
+            System.out.println( "{http://inspire.ec.europa.eu/schemas/ps/4.0}designation" );
+            System.out.println( "# property without namespace binding" );
+            System.out.println( "designation" );
+            System.out.println( "# empty lines are ignored" );
+            System.out.println( "" );
+            System.out.println( "# leading and trailing white spaces are ignored" );
+            System.out.println( "---------- end file ----------" );
             return;
         }
 
@@ -103,6 +130,10 @@ public class Exec {
                 String dialect = arg.split( "=" )[1];
                 sqlDialect = instantiateDialect( dialect );
                 System.out.println( "Using dialect=" + dialect );
+            } else if ( arg.startsWith( "--listOfPropertiesWithPrimitiveHref" ) ) {
+                String pathToFile = arg.split( "=" )[1];
+                propertiesWithPrimitiveHref = propertyNameParser.parsePropertiesWithPrimitiveHref( pathToFile );
+                System.out.println( "Using listOfPropertiesWithPrimitiveHref=" + propertiesWithPrimitiveHref );
             } else {
                 schemaUrl = arg;
             }
@@ -117,7 +148,8 @@ public class Exec {
         AppSchemaMapper mapper = new AppSchemaMapper( appSchema, !relationalMapping, relationalMapping, geometryParams,
                                                       sqlDialect.getMaxColumnNameLength(), true, useIntegerFids );
         MappedAppSchema mappedSchema = mapper.getMappedSchema();
-        SQLFeatureStoreConfigWriter configWriter = new SQLFeatureStoreConfigWriter( mappedSchema );
+        SQLFeatureStoreConfigWriter configWriter = new SQLFeatureStoreConfigWriter( mappedSchema,
+                        propertiesWithPrimitiveHref );
         String uriPathToSchema = new URI( schemaUrl ).getPath();
         String schemaFileName = uriPathToSchema.substring( uriPathToSchema.lastIndexOf( '/' ) + 1 );
         String fileName = schemaFileName.replaceFirst( "[.][^.]+$", "" );
@@ -134,12 +166,12 @@ public class Exec {
     }
 
     private static void writeSqlDdlFile( MappedAppSchema mappedSchema, String fileName )
-                            throws IOException {
+                    throws IOException {
         String[] createStmts = DDLCreator.newInstance( mappedSchema, sqlDialect ).getDDL();
         String sqlOutputFilename = "./" + fileName + ".sql";
-        System.out.println( "Writing SQL DDL into file: " + sqlOutputFilename );
         Path pathToSqlOutputFile = Paths.get( sqlOutputFilename );
-        try (BufferedWriter writer = Files.newBufferedWriter( pathToSqlOutputFile )) {
+        System.out.println( "Writing SQL DDL into file: " + pathToSqlOutputFile.toUri() );
+        try ( BufferedWriter writer = Files.newBufferedWriter( pathToSqlOutputFile ) ) {
             for ( String sqlStatement : createStmts ) {
                 writer.write( sqlStatement + ";" + System.getProperty( "line.separator" ) );
             }
@@ -148,16 +180,17 @@ public class Exec {
 
     private static void writeXmlConfigFile( String[] schemaUrls, SQLFeatureStoreConfigWriter configWriter,
                                             String fileName )
-                            throws XMLStreamException, IOException {
+                    throws XMLStreamException, IOException {
         List<String> configUrls = Arrays.asList( schemaUrls );
         String xmlOutputFilename = "./" + fileName + ".xml";
-        System.out.println( "Writing deegree SQLFeatureStore configuration into file: " + xmlOutputFilename );
+        Path pathToXmlOutputFile = Paths.get( xmlOutputFilename );
+        System.out.println( "Writing deegree SQLFeatureStore configuration into file: " + pathToXmlOutputFile.toUri() );
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         XMLStreamWriter xmlWriter = XMLOutputFactory.newInstance().createXMLStreamWriter( bos );
         xmlWriter = new IndentingXMLStreamWriter( xmlWriter );
-        configWriter.writeConfig( xmlWriter, fileName + "DS", configUrls );
+        configWriter.writeConfig( xmlWriter, fileName+"DS", configUrls );
         xmlWriter.close();
-        Files.write( Paths.get( xmlOutputFilename ), bos.toString().getBytes( StandardCharsets.UTF_8 ) );
+        Files.write( pathToXmlOutputFile, bos.toString().getBytes( StandardCharsets.UTF_8 ) );
     }
 
     private static SQLDialect instantiateDialect( String dialect ) {

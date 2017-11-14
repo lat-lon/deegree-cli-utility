@@ -159,11 +159,11 @@
     <distributionManagement>
         <repository>
             <id>latlon-deegreeaddons-releases</id>
-            <url>http://repo.lat-lon/nexus/content/repositories/deegreeaddons-releases/</url>
+            <url>http://repo/nexus/content/repositories/deegreeaddons-releases/</url>
         </repository>
         <snapshotRepository>
             <id>latlon-deegreeaddons-snapshots</id>
-            <url>http://repo.lat-lon/nexus/content/repositories/deegreeaddons-snapshots/</url>
+            <url>http://repo/nexus/content/repositories/deegreeaddons-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
 

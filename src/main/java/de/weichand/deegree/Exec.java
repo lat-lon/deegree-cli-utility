@@ -76,6 +76,9 @@ public class Exec {
 
     private static String dialect = "postgis"; // generates mapping for PostGIS dialect
 
+    private static SQLDialect sqlDialect = instantiateDialect( null ); // generates mapping for PostGIS dialect (per
+                                                                       // default)
+
     private static List<QName> propertiesWithPrimitiveHref; // primitive href mapping instead of feature mapping is used
                                                             // in deegree configuration for listed properties
 
@@ -124,7 +127,8 @@ public class Exec {
                 relationalMapping = mapping.equalsIgnoreCase( "blob" ) ? false : true;
                 System.out.println( "Using mapping=" + mapping );
             } else if ( arg.startsWith( "--dialect" ) ) {
-                dialect = arg.split( "=" )[1];
+                String dialect = arg.split( "=" )[1];
+                sqlDialect = instantiateDialect( dialect );
                 System.out.println( "Using dialect=" + dialect );
             } else if ( arg.startsWith( "--listOfPropertiesWithPrimitiveHref" ) ) {
                 String pathToFile = arg.split( "=" )[1];
@@ -142,7 +146,7 @@ public class Exec {
         CRSRef storageCrs = CRSManager.getCRSRef( "EPSG:" + String.valueOf( srid ) );
         GeometryStorageParams geometryParams = new GeometryStorageParams( storageCrs, String.valueOf( srid ), DIM_2 );
         AppSchemaMapper mapper = new AppSchemaMapper( appSchema, !relationalMapping, relationalMapping, geometryParams,
-                        64, true, useIntegerFids );
+                                                      sqlDialect.getMaxColumnNameLength(), true, useIntegerFids );
         MappedAppSchema mappedSchema = mapper.getMappedSchema();
         SQLFeatureStoreConfigWriter configWriter = new SQLFeatureStoreConfigWriter( mappedSchema,
                         propertiesWithPrimitiveHref );
@@ -163,8 +167,6 @@ public class Exec {
 
     private static void writeSqlDdlFile( MappedAppSchema mappedSchema, String fileName )
                     throws IOException {
-        SQLDialect sqlDialect = dialect.equalsIgnoreCase( "oracle" ) ? new OracleDialect( "", 11, 2 )
-                                                                    : new PostGISDialect( "2.0.0" );
         String[] createStmts = DDLCreator.newInstance( mappedSchema, sqlDialect ).getDDL();
         String sqlOutputFilename = "./" + fileName + ".sql";
         Path pathToSqlOutputFile = Paths.get( sqlOutputFilename );
@@ -186,9 +188,15 @@ public class Exec {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         XMLStreamWriter xmlWriter = XMLOutputFactory.newInstance().createXMLStreamWriter( bos );
         xmlWriter = new IndentingXMLStreamWriter( xmlWriter );
-        configWriter.writeConfig( xmlWriter, fileName + "DS", configUrls );
+        configWriter.writeConfig( xmlWriter, fileName+"DS", configUrls );
         xmlWriter.close();
         Files.write( pathToXmlOutputFile, bos.toString().getBytes( StandardCharsets.UTF_8 ) );
+    }
+
+    private static SQLDialect instantiateDialect( String dialect ) {
+        if ( dialect != null && "oracle".equalsIgnoreCase( dialect ) )
+            return new OracleDialect( "", 11, 2 );
+        return new PostGISDialect( "2.0.0" );
     }
 
 }

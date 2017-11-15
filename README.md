@@ -101,3 +101,6 @@ Set the `http.proxyHost`, `http.proxyPort` and `http.nonProxyHosts` config prope
 
     java -Dhttp.proxyHost=your-proxy.net -Dhttp.proxyPort=80 -jar deegree-cli-utility.jar --format=ddl --idtype=uuid http://inspire.ec.europa.eu/schemas/cp/4.0/CadastralParcels.xsd
 
+# License
+
+[![License](https://img.shields.io/badge/License-LGPL%20v2.1-blue.svg)](https://www.gnu.org/licenses/lgpl-2.1)
